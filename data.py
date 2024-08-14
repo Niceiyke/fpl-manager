@@ -20,7 +20,7 @@ class FPLDataFetcher:
     @staticmethod
     def fetch_fpl_data():
 
-        with open('response.json', 'r') as file:
+        with open('response.json', 'r',encoding='utf8') as file:
             return json.load(file)
 
 

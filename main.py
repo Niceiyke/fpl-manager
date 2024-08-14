@@ -1,9 +1,9 @@
 # Main function to create and manage a team
 from data import FPLDataFetcher
-from managemment import AutomatedTeamManagement
-from player import PlayerParser,PlayerScoreCalculator
-from team import TeamData, TeamSelector
-from eval import EvalauatePlayer
+from player import PlayerParser
+from team import TeamSelector
+from cp import TeamSelectorCP
+
 
 
 def create_and_manage_team():
@@ -15,15 +15,12 @@ def create_and_manage_team():
 
     # Initialize objects
     team_data_list = fpl_data['teams']
-    all_players =fpl_data['elements']
-    team_data_obj=TeamData(team_data_list)
- 
-    opponent_data=team_data_obj.calculate_opponent_strengths()
+
+   
 
     player_parser = PlayerParser(fpl_data, fixtures)
     players = player_parser.players
-    team_data = {team['id']: team for team in team_data_list}
-
+   
     # Team selection
     total_budget = 100  # Total budget in million
     position_requirements = {
@@ -32,50 +29,70 @@ def create_and_manage_team():
         "midfielders": 5,
         "forwards": 3
     }
-    premium_thresholds = {
-        "goalkeepers": 5.0,
-        "defenders": 6.0,
-        "midfielders": 8.0,
-        "forwards": 9.0
-    }
-    minimum_premium_players = {
-        "goalkeepers": 1,
-        "defenders": 3,
-        "midfielders": 2,
-        "forwards": 2
-    }
-
-    eval_obj=EvalauatePlayer()
-
-    injury_data, rotation_data =eval_obj.parse_injury_rotation_data(players)
-
-    # Linear Programming approach
-    team_selector_lp = TeamSelector(players, total_budget, position_requirements)
-    selected_team_lp = team_selector_lp.select_team_lp()
-    print("Selected team using Linear Programming:")
-    for position, players in selected_team_lp.items():
-        print(f"{position.capitalize()}:")
-        for player in players:
-            print(f"  - {player['name']} (${player['price']}m)")
-    
   
-    # Initialize Automated Team Management
-    automated_management = AutomatedTeamManagement(selected_team_lp, total_budget, fixtures, injury_data, rotation_data)
+    # Linear Programming approach
+    team_selector = TeamSelector(players, total_budget, position_requirements,fpl_data, fixtures)
+    team_selector_cp = TeamSelectorCP(players, total_budget, position_requirements,fpl_data, fixtures)
+    
+    selected_team_lp = team_selector.select_team_lp()
+    if selected_team_lp is None:
+        
+        print("Team selection failed due to a constraint violation or optimization issue.")
+          # Handle the issue or exit the function
+    else:
+        total_price=0
+        for position, players in selected_team_lp.items():
+            # Process the selected team
+            print(f"Selected {len(players)} players for {position}:")
+            for player in players:
+                print(f"- {player['name']} -(${player['price']}M) -(${player['points']}) -club:{player['team']}")
+                total_price += player['price']
 
-    # Make transfer decisions
-    transfers = automated_management.transfer_decision(players)
-    print("\nTransfers:")
-    for player_out, player_in in transfers:
-        print(f"  - Out: {player_out['name']} (${player_out['price']}m), In: {player_in['name']} (${player_in['price']}m)")
+    print(f"\nTotal price of selected players: ${total_price:.1f}M")
+    print(f"budget left: ${total_budget - total_price:.1f}M")
+        
+    """
+    selected_team_ga = team_selector.select_team_ga()
+    if selected_team_ga is None:
+        
+        print("Team selection failed due to a constraint violation or optimization issue.")
+          # Handle the issue or exit the function
+    else:
+        # Initialize total price
+        total_price = 0
 
-    # Calculate optimal lineup
-    optimal_lineup = automated_management.calculate_optimal_lineup()
-    print("\nOptimal Lineup:")
-    for position, lineup_players in optimal_lineup.items():
-        print(f"{position.capitalize()}:")
-        for player in lineup_players:
-            print(f"  - {player['name']} (${(player['now_price']/10)}m)")
+        # Print the name and price of each player
+        print("Selected Team:")
+        for player in selected_team_ga:
+            name = player['name']
+            price = player['price']
+            total_price += price
+            print(f"Name: {name}, Price: {price:.1f}")
 
+        # Print the total price of the team
+        print(f"\nTotal Price of the Team: {total_price:.1f}")
 
-# Run the main function
+    print(f"\nTotal price of selected players: ${total_price:.1f}M")
+    print(f"budget left: ${total_budget - total_price:.1f}M")
+    """
+
+    selected_team_c=team_selector_cp.select_team_cp()
+
+    if selected_team_c is None:
+        
+        print("Team selection failed due to a constraint violation or optimization issue.")
+          # Handle the issue or exit the function
+    else:
+        total_price=0
+        for position, players in selected_team_c.items():
+            # Process the selected team
+            print(f"Selected {len(players)} players for {position}:")
+            for player in players:
+                print(f"- {player['name']} -(${player['price']}M) -({player['points']}) -club:{player['team']}")
+                total_price += player['price']
+        print(f"\nTotal price of selected players: ${total_price:.1f}M")
+        print(f"budget left: ${total_budget - total_price:.1f}M")
+    
+
+    # Run the main function
 create_and_manage_team()

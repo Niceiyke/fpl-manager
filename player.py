@@ -40,11 +40,17 @@ class PlayerParser:
             players[position].append({
                 "id": player['id'],
                 "name": player['web_name'],
+                "position": player['element_type'],
+                "status": player['status'],
+                "ict_index": player['ict_index'],
                 "price": player['now_cost'] / 10,
                 "points": player['total_points'],
                 "expected_goals": player['expected_goals'],
                 "expected_assists": player['expected_assists'],
                 "expected_goal_involvements": player['expected_goal_involvements'],
+                'saves_per_90': player['saves_per_90'],
+                "goals_conceded_per_90": player['goals_conceded_per_90'],
+                "bonus": player['bonus'],
                 
                 "form": form,
                 "fixture_difficulty": fixture_difficulty,
@@ -52,6 +58,26 @@ class PlayerParser:
             })
 
         return players
+    
+    def calculate_upcoming_fixture_difficulty(self, num_weeks=5):
+        team_fixtures = {team['id']: [] for team in self.data['teams']}
+        
+        for fixture in self.fixtures:
+            if not fixture['finished']:
+                home_team = fixture['team_h']
+                away_team = fixture['team_a']
+                
+                # Only consider fixtures within the upcoming num_weeks
+                if fixture['event'] <= num_weeks:
+                    team_fixtures[home_team].append(fixture['team_h_difficulty'])
+                    team_fixtures[away_team].append(fixture['team_a_difficulty'])
+
+        avg_fixture_difficulty = {
+            team_id: sum(difficulties) / len(difficulties) if len(difficulties) > 0 else 0
+            for team_id, difficulties in team_fixtures.items()
+        }
+
+        return avg_fixture_difficulty
 
 
 class PlayerScoreCalculator:

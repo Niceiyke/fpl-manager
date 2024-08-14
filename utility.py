@@ -34,3 +34,6 @@ class RiskAssessor:
                 difficulty_score += fixture_difficulty - (opponent_strength - team_strength) * 0.5  # Example calculation
 
         return difficulty_score
+
+
+
