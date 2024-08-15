@@ -1,3 +1,4 @@
+
 from ortools.sat.python import cp_model
 
 class TeamSelectorCP:
@@ -35,6 +36,14 @@ class TeamSelectorCP:
             "bonus": 1,
             "fixture_difficulty": 1,
         }
+    # Map of position integers to position names
+    position_map = {
+            1: "goalkeepers",
+            2: "defenders",
+            3: "midfielders",
+            4: "forwards"
+        }
+
     def __init__(self, players, total_budget, position_requirements, data, fixtures):
         self.players = players
         self.total_budget = int(total_budget * 10)  # Scale the budget
@@ -44,7 +53,7 @@ class TeamSelectorCP:
         self.upcoming_fixture_difficulty = self.calculate_upcoming_fixture_difficulty()
       
         self.calculate_max_values()
-
+ 
     
     def calculate_upcoming_fixture_difficulty(self, num_weeks=5):
         team_fixtures = {team["id"]: [] for team in self.data["teams"]}
@@ -77,6 +86,7 @@ class TeamSelectorCP:
         self.max_goals_scored = 0
         self.max_assists = 0
         self.max_saves = 0
+        self.max_expected_point=0
 
         # Update max values based on players' data
         for position in self.players:
@@ -103,17 +113,82 @@ class TeamSelectorCP:
                     self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
                     self.max_saves = max(self.max_saves, int(player.get("saves", 0)))
 
-    def select_team_cp(self):
-        model = cp_model.CpModel()
+    #Objective: maximize the total weighted score
+    def get_player_score(self,player):
+            pos = self.position_map[player["position"]]
+            score = 0
+            if pos == "goalkeepers":
+                clean_sheets_score = (int(player.get("clean_sheets", 0)) / self.max_clean_sheets) if self.max_clean_sheets > 0 else 0
+                bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
+                goals_conceded_score = (1 - (int(player.get("goals_conceded_per_90", 0)) / self.max_goals_conceded)) if self.max_goals_conceded > 0 else 0
+                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
+                saves_score = (int(player.get("saves", 0)) / self.max_saves) if self.max_saves > 0 else 0
+                expected_point=(int(player.get("expected_point", 0)) / self.max_saves) if self.max_saves > 0 else 0
+                score = (
+                    self.goalkeeper_weights["clean_sheets"] * clean_sheets_score
+                    + self.goalkeeper_weights["bonus"] * bonus_score
+                    + self.goalkeeper_weights["goals_conceded_per_90"] * goals_conceded_score
+                    + self.goalkeeper_weights["fixture_difficulty"] * fdr_score
+                    + self.goalkeeper_weights["saves"] * saves_score
+                    + self.goalkeeper_weights["expected_point"]*expected_point
+                )
+            
+            if pos == "defenders":
+                clean_sheets_score = (int(player.get("clean_sheets", 0)) / self.max_clean_sheets) if self.max_clean_sheets > 0 else 0
+                bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
+                goals_conceded_score = (1 - (int(player.get("goals_conceded_per_90", 0)) / self.max_goals_conceded)) if self.max_goals_conceded > 0 else 0
+                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
+                expected_point=(int(player.get("expected_point", 0)) / self.max_saves) if self.max_saves > 0 else 0
 
-        # Map of position integers to position names
-        position_map = {
-            1: "goalkeepers",
-            2: "defenders",
-            3: "midfielders",
-            4: "forwards"
-        }
-        
+                score = (
+                    self.defender_weights["clean_sheets"] * clean_sheets_score
+                    + self.defender_weights["bonus"] * bonus_score
+                    + self.defender_weights["goals_conceded_per_90"] * goals_conceded_score
+                    + self.defender_weights["fixture_difficulty"] * fdr_score
+                    + self.defender_weights["expected_point"]*expected_point
+                )
+
+            elif pos == "midfielders":
+                goals_scored_score = (int(player.get("goals_scored", 0)) / self.max_goals_scored) if self.max_goals_scored > 0 else 0
+                assists_score = (int(player.get("assists", 0)) / self.max_assists) if self.max_assists > 0 else 0
+                bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
+                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
+                expected_point=(int(player.get("expected_point", 0)) / self.max_saves) if self.max_saves > 0 else 0
+
+                score = (
+                    self.midfielder_weights["expected_goals"] * goals_scored_score
+                    + self.midfielder_weights["expected_assists"] * assists_score
+                    + self.midfielder_weights["bonus"] * bonus_score
+                    + self.midfielder_weights["fixture_difficulty"] * fdr_score
+                    + self.midfielder_weights["expected_point"]*expected_point
+                )
+
+            elif pos == "forwards":
+                goals_scored_score = (int(player.get("goals_scored", 0)) / self.max_goals_scored) if self.max_goals_scored > 0 else 0
+                assists_score = (int(player.get("assists", 0)) / self.max_assists) if self.max_assists > 0 else 0
+                bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
+                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
+                expected_point=(int(player.get("expected_point", 0)) / self.max_saves) if self.max_saves > 0 else 0
+
+                score = (
+                    self.forward_weights["expected_goals"] * goals_scored_score
+                    + self.forward_weights["expected_assists"] * assists_score
+                    + self.forward_weights["bonus"] * bonus_score
+                    + self.forward_weights["fixture_difficulty"] * fdr_score
+                    + self.forward_weights["expected_point"]*expected_point
+                )
+
+            # Introduce a floor to prevent negative scores
+            score = max(score, 0)
+            
+            if score > 0 :
+                if pos =="forwards" :
+                    print(f"Player: {player['name']}, Score: {score}")
+            return score
+
+
+    def select_team_cp(self):
+        model = cp_model.CpModel()   
         # Create binary variables for each player
         player_vars = {
             player["name"]: model.NewBoolVar(player["name"])
@@ -150,75 +225,11 @@ class TeamSelectorCP:
             <= self.total_budget
         )
 
-        # Objective: maximize the total weighted score
-        def get_player_score(player):
-            pos = position_map[player["position"]]
-            score = 0
-            if pos == "goalkeepers":
-                clean_sheets_score = (int(player.get("clean_sheets", 0)) / self.max_clean_sheets) if self.max_clean_sheets > 0 else 0
-                bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
-                goals_conceded_score = (1 - (int(player.get("goals_conceded_per_90", 0)) / self.max_goals_conceded)) if self.max_goals_conceded > 0 else 0
-                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
-                saves_score = (int(player.get("saves", 0)) / self.max_saves) if self.max_saves > 0 else 0
-                score = (
-                    self.goalkeeper_weights["clean_sheets"] * clean_sheets_score
-                    + self.goalkeeper_weights["bonus"] * bonus_score
-                    + self.goalkeeper_weights["goals_conceded_per_90"] * goals_conceded_score
-                    + self.goalkeeper_weights["fixture_difficulty"] * fdr_score
-                    + self.goalkeeper_weights["saves"] * saves_score
-                )
-            
-            if pos == "defenders":
-                clean_sheets_score = (int(player.get("clean_sheets", 0)) / self.max_clean_sheets) if self.max_clean_sheets > 0 else 0
-                bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
-                goals_conceded_score = (1 - (int(player.get("goals_conceded_per_90", 0)) / self.max_goals_conceded)) if self.max_goals_conceded > 0 else 0
-                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
-
-                score = (
-                    self.defender_weights["clean_sheets"] * clean_sheets_score
-                    + self.defender_weights["bonus"] * bonus_score
-                    + self.defender_weights["goals_conceded_per_90"] * goals_conceded_score
-                    + self.defender_weights["fixture_difficulty"] * fdr_score
-                )
-
-            elif pos == "midfielders":
-                goals_scored_score = (int(player.get("goals_scored", 0)) / self.max_goals_scored) if self.max_goals_scored > 0 else 0
-                assists_score = (int(player.get("assists", 0)) / self.max_assists) if self.max_assists > 0 else 0
-                bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
-                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
-
-                score = (
-                    self.midfielder_weights["expected_goals"] * goals_scored_score
-                    + self.midfielder_weights["expected_assists"] * assists_score
-                    + self.midfielder_weights["bonus"] * bonus_score
-                    + self.midfielder_weights["fixture_difficulty"] * fdr_score
-                )
-
-            elif pos == "forwards":
-                goals_scored_score = (int(player.get("goals_scored", 0)) / self.max_goals_scored) if self.max_goals_scored > 0 else 0
-                assists_score = (int(player.get("assists", 0)) / self.max_assists) if self.max_assists > 0 else 0
-                bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
-                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
-
-                score = (
-                    self.forward_weights["expected_goals"] * goals_scored_score
-                    + self.forward_weights["expected_assists"] * assists_score
-                    + self.forward_weights["bonus"] * bonus_score
-                    + self.forward_weights["fixture_difficulty"] * fdr_score
-                )
-
-            # Introduce a floor to prevent negative scores
-            score = max(score, 0)
-            
-            if score > 0 :
-                if pos =="midfielders" :
-                    print(f"Player: {player['name']}, Score: {score}")
-            return score
-
+        #
         # Use `self.get_player_score` to call the method
         model.Maximize(
             sum(
-                player_vars[player["name"]] * get_player_score(player)
+                player_vars[player["name"]] * self.get_player_score(player)
                 for position in self.players
                 for player in self.players[position]
             )

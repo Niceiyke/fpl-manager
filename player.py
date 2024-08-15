@@ -51,7 +51,7 @@ class PlayerParser:
                 'saves_per_90': player['saves_per_90'],
                 "goals_conceded_per_90": player['goals_conceded_per_90'],
                 "bonus": player['bonus'],
-                
+                "expected_point": player['ep_next'],
                 "form": form,
                 "fixture_difficulty": fixture_difficulty,
                 "team": player['team']

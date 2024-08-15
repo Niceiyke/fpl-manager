@@ -13,11 +13,6 @@ def create_and_manage_team():
     if not fpl_data or not fixtures:
         return
 
-    # Initialize objects
-    team_data_list = fpl_data['teams']
-
-   
-
     player_parser = PlayerParser(fpl_data, fixtures)
     players = player_parser.players
    
@@ -94,5 +89,6 @@ def create_and_manage_team():
         print(f"budget left: ${total_budget - total_price:.1f}M")
     
 
-    # Run the main function
+
+# Run the main function
 create_and_manage_team()
