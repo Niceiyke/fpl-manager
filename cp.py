@@ -3,38 +3,46 @@ from ortools.sat.python import cp_model
 
 class TeamSelectorCP:
     goalkeeper_weights = {
-    "saves": 1,
+    "saves": 0,
     "clean_sheets": 1,
-    "goals_conceded_per_90": 1,
-    "bonus": 1,
-    "fixture_difficulty": 1,
+    "goals_conceded_per_90": 3,
+    "bonus": 3,
+    "fixture_difficulty": 2,
+    "expected_point":1,
+    "starts":10
 }
 
     defender_weights = {
     "clean_sheets":1,
-    "goals_scored": 1,
-    "expected_assist": 1,
+    "goals_scored": 4,
+    "expected_assist":3,
     "goals_conceded_per_90": 1,
-    "bonus": 1,
-    "fixture_difficulty": 1,
+    "bonus": 5,
+    "fixture_difficulty": 8,
+    "expected_point":8,
+    "starts":10
 }
 
     midfielder_weights = {
-            "expected_goals": 1,
-            "expected_assists": 1,
-            "expected_goal_involvements": 1,
-            "ict_index": 1,
-            "bonus": 1,
-            "fixture_difficulty": 1,
+            "expected_goals": 8,
+            "expected_assists": 9,
+            "expected_goal_involvements":1,
+            "ict_index": 5,
+            "bonus": 10,
+            "fixture_difficulty": 5,
+            "expected_point":10,
+            "starts":10
         }
 
     forward_weights = {
             "expected_goals": 1,
             "expected_assists": 1,
             "expected_goal_involvements": 0,
-            "ict_index": 1,
-            "bonus": 1,
-            "fixture_difficulty": 1,
+            "ict_index": 5,
+            "bonus": 10,
+            "fixture_difficulty": 5,
+            "expected_point":10,
+            "starts":5
         }
     # Map of position integers to position names
     position_map = {
@@ -51,11 +59,10 @@ class TeamSelectorCP:
         self.data = data
         self.fixtures = fixtures
         self.upcoming_fixture_difficulty = self.calculate_upcoming_fixture_difficulty()
-      
         self.calculate_max_values()
  
     
-    def calculate_upcoming_fixture_difficulty(self, num_weeks=5):
+    def calculate_upcoming_fixture_difficulty(self, num_weeks=3):
         team_fixtures = {team["id"]: [] for team in self.data["teams"]}
 
         for fixture in self.fixtures:
@@ -78,40 +85,53 @@ class TeamSelectorCP:
         return avg_fixture_difficulty
     
     def calculate_max_values(self):
-        # Initialize max values
-        self.max_clean_sheets = 0
-        self.max_bonus = 0
-        self.max_goals_conceded = 0
-        self.max_fdr = 0
-        self.max_goals_scored = 0
-        self.max_assists = 0
-        self.max_saves = 0
-        self.max_expected_point=0
+            # Initialize max values
+            self.max_clean_sheets = 0
+            self.max_bonus = 0
+            self.max_goals_conceded = 0
+            self.max_fdr = 0
+            self.max_goals_scored = 0
+            self.max_assists = 0
+            self.max_saves = 0
+            self.max_expected_point = 0
+            self.max_starts=0
 
-        # Update max values based on players' data
-        for position in self.players:
-            for player in self.players[position]:
-                if position == "defenders":
-                    self.max_clean_sheets = max(self.max_clean_sheets, int(player.get("clean_sheets", 0)))
-                    self.max_bonus = max(self.max_bonus, int(player.get("bonus", 0)))
-                    self.max_goals_conceded = max(self.max_goals_conceded, int(player.get("goals_conceded_per_90", 0)))
-                    self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
-                elif position == "midfielders":
-                    self.max_goals_scored = max(self.max_goals_scored, int(player.get("goals_scored", 0)))
-                    self.max_assists = max(self.max_assists, int(player.get("assists", 0)))
-                    self.max_bonus = max(self.max_bonus, int(player.get("bonus", 0)))
-                    self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
-                elif position == "forwards":
-                    self.max_goals_scored = max(self.max_goals_scored, int(player.get("goals_scored", 0)))
-                    self.max_assists = max(self.max_assists, int(player.get("assists", 0)))
-                    self.max_bonus = max(self.max_bonus, int(player.get("bonus", 0)))
-                    self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
-                if position == "goalkeepers":
-                    self.max_clean_sheets = max(self.max_clean_sheets, int(player.get("clean_sheets", 0)))
-                    self.max_bonus = max(self.max_bonus, int(player.get("bonus", 0)))
-                    self.max_goals_conceded = max(self.max_goals_conceded, int(player.get("goals_conceded_per_90", 0)))
-                    self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
-                    self.max_saves = max(self.max_saves, int(player.get("saves", 0)))
+            # Update max values based on players' data
+            for position in self.players:
+                for player in self.players[position]:
+                    if position == "defenders":
+                        self.max_clean_sheets = max(self.max_clean_sheets, int(float(player.get("clean_sheets", 0))))
+                        self.max_bonus = max(self.max_bonus, int(float(player.get("bonus", 0))))
+                        self.max_goals_conceded = max(self.max_goals_conceded, int(float(player.get("goals_conceded_per_90", 0))))
+                        self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
+                        self.max_expected_point = max(self.max_expected_point, int(float(player.get("expected_point", 0))))
+                        self.max_starts = max(self.max_starts, int(float(player.get("starts", 0))))
+                        
+                    elif position == "midfielders":
+                        self.max_goals_scored = max(self.max_goals_scored, int(float(player.get("goals_scored", 0))))
+                        self.max_assists = max(self.max_assists, int(float(player.get("assists", 0))))
+                        self.max_bonus = max(self.max_bonus, int(float(player.get("bonus", 0))))
+                        self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
+                        self.max_expected_point = max(self.max_expected_point, int(float(player.get("expected_point", 0))))
+                        self.max_starts = max(self.max_starts, int(float(player.get("starts", 0))))
+                        
+                    elif position == "forwards":
+                        self.max_goals_scored = max(self.max_goals_scored, int(float(player.get("goals_scored", 0))))
+                        self.max_assists = max(self.max_assists, int(float(player.get("assists", 0))))
+                        self.max_bonus = max(self.max_bonus, int(float(player.get("bonus", 0))))
+                        self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
+                        self.max_expected_point = max(self.max_expected_point, int(float(player.get("expected_point", 0))))
+                        self.max_starts = max(self.max_starts, int(float(player.get("starts", 0))))
+                        
+                    elif position == "goalkeepers":
+                        self.max_clean_sheets = max(self.max_clean_sheets, int(float(player.get("clean_sheets", 0))))
+                        self.max_bonus = max(self.max_bonus, int(float(player.get("bonus", 0))))
+                        self.max_goals_conceded = max(self.max_goals_conceded, int(float(player.get("goals_conceded_per_90", 0))))
+                        self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
+                        self.max_saves = max(self.max_saves, int(float(player.get("saves", 0))))
+                        self.max_expected_point = max(self.max_expected_point, int(float(player.get("expected_point", 0))))
+                        self.max_starts = max(self.max_starts, int(float(player.get("starts", 0))))
+                        
 
     #Objective: maximize the total weighted score
     def get_player_score(self,player):
@@ -123,7 +143,8 @@ class TeamSelectorCP:
                 goals_conceded_score = (1 - (int(player.get("goals_conceded_per_90", 0)) / self.max_goals_conceded)) if self.max_goals_conceded > 0 else 0
                 fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
                 saves_score = (int(player.get("saves", 0)) / self.max_saves) if self.max_saves > 0 else 0
-                expected_point=(int(player.get("expected_point", 0)) / self.max_saves) if self.max_saves > 0 else 0
+                expected_point=(int(float(player.get("expected_point", 0))) / self.max_expected_point) if self.max_expected_point > 0 else 0
+                starts=(int(float(player.get("starts", 0))) / self.max_starts) if self.max_starts > 0 else 0
                 score = (
                     self.goalkeeper_weights["clean_sheets"] * clean_sheets_score
                     + self.goalkeeper_weights["bonus"] * bonus_score
@@ -131,6 +152,7 @@ class TeamSelectorCP:
                     + self.goalkeeper_weights["fixture_difficulty"] * fdr_score
                     + self.goalkeeper_weights["saves"] * saves_score
                     + self.goalkeeper_weights["expected_point"]*expected_point
+                    + self.goalkeeper_weights["starts"]*starts
                 )
             
             if pos == "defenders":
@@ -138,7 +160,8 @@ class TeamSelectorCP:
                 bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
                 goals_conceded_score = (1 - (int(player.get("goals_conceded_per_90", 0)) / self.max_goals_conceded)) if self.max_goals_conceded > 0 else 0
                 fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
-                expected_point=(int(player.get("expected_point", 0)) / self.max_saves) if self.max_saves > 0 else 0
+                expected_point=(int(float(player.get("expected_point", 0))) / self.max_expected_point) if self.max_expected_point > 0 else 0
+                starts=(int(float(player.get("starts", 0))) / self.max_starts) if self.max_starts > 0 else 0
 
                 score = (
                     self.defender_weights["clean_sheets"] * clean_sheets_score
@@ -146,6 +169,7 @@ class TeamSelectorCP:
                     + self.defender_weights["goals_conceded_per_90"] * goals_conceded_score
                     + self.defender_weights["fixture_difficulty"] * fdr_score
                     + self.defender_weights["expected_point"]*expected_point
+                    + self.defender_weights["starts"]*starts
                 )
 
             elif pos == "midfielders":
@@ -153,7 +177,8 @@ class TeamSelectorCP:
                 assists_score = (int(player.get("assists", 0)) / self.max_assists) if self.max_assists > 0 else 0
                 bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
                 fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
-                expected_point=(int(player.get("expected_point", 0)) / self.max_saves) if self.max_saves > 0 else 0
+                expected_point=(int(float(player.get("expected_point", 0))) / self.max_expected_point) if self.max_expected_point > 0 else 0
+                starts=(int(float(player.get("starts", 0))) / self.max_starts) if self.max_starts > 0 else 0
 
                 score = (
                     self.midfielder_weights["expected_goals"] * goals_scored_score
@@ -161,6 +186,7 @@ class TeamSelectorCP:
                     + self.midfielder_weights["bonus"] * bonus_score
                     + self.midfielder_weights["fixture_difficulty"] * fdr_score
                     + self.midfielder_weights["expected_point"]*expected_point
+                    + self.midfielder_weights["starts"]*starts
                 )
 
             elif pos == "forwards":
@@ -168,7 +194,8 @@ class TeamSelectorCP:
                 assists_score = (int(player.get("assists", 0)) / self.max_assists) if self.max_assists > 0 else 0
                 bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
                 fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
-                expected_point=(int(player.get("expected_point", 0)) / self.max_saves) if self.max_saves > 0 else 0
+                expected_point=(int(float(player.get("expected_point", 0))) / self.max_expected_point) if self.max_expected_point > 0 else 0
+                starts=(int(float(player.get("starts", 0))) / self.max_starts) if self.max_starts > 0 else 0
 
                 score = (
                     self.forward_weights["expected_goals"] * goals_scored_score
@@ -176,13 +203,14 @@ class TeamSelectorCP:
                     + self.forward_weights["bonus"] * bonus_score
                     + self.forward_weights["fixture_difficulty"] * fdr_score
                     + self.forward_weights["expected_point"]*expected_point
+                    + self.forward_weights["starts"]*starts
                 )
 
             # Introduce a floor to prevent negative scores
             score = max(score, 0)
             
             if score > 0 :
-                if pos =="forwards" :
+                if pos =="midfielders" :
                     print(f"Player: {player['name']}, Score: {score}")
             return score
 
@@ -214,6 +242,21 @@ class TeamSelectorCP:
 
         for club_id, club_vars in club_player_vars.items():
             model.Add(sum(club_vars) <= 3)
+
+        # New Constraint: Only one player from a club in each position
+        for position in self.players:
+            # Group players by their club within the current position
+            club_position_vars = {}
+            for player in self.players[position]:
+                club_id = player["team"]
+                if club_id not in club_position_vars:
+                    club_position_vars[club_id] = []
+                club_position_vars[club_id].append(player_vars[player["name"]])
+
+            # Add a constraint to allow at most one player from each club in this position
+            for club_id, club_vars in club_position_vars.items():
+                model.Add(sum(club_vars) <= 1)
+
 
         # Constraint: total price of selected players must be within the budget
         model.Add(

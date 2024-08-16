@@ -54,7 +54,8 @@ class PlayerParser:
                 "expected_point": player['ep_next'],
                 "form": form,
                 "fixture_difficulty": fixture_difficulty,
-                "team": player['team']
+                "team": player['team'],
+                "starts": player['starts'],
             })
 
         return players

@@ -83,7 +83,7 @@ def create_and_manage_team():
             # Process the selected team
             print(f"Selected {len(players)} players for {position}:")
             for player in players:
-                print(f"- {player['name']} -(${player['price']}M) -({player['points']}) -club:{player['team']}")
+                print(f"- {player['name']} -(${player['price']}M) -({player['expected_point']}) -club:{player['team']}")
                 total_price += player['price']
         print(f"\nTotal price of selected players: ${total_price:.1f}M")
         print(f"budget left: ${total_budget - total_price:.1f}M")

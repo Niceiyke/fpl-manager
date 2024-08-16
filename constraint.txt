@@ -1,0 +1,12 @@
+#Balanced Team Strategy
+
+total_defense_cost = sum(
+    player_vars[player["name"]] * player["price"] for player in defenders_and_goalkeepers
+)
+model.Add(total_defense_cost >= 0.4 * self.total_budget)
+
+
+#injury and sunspension 
+for player in all_players:
+    if player["injury_status"] or player["suspension_status"]:
+        model.Add(player_vars[player["name"]] == 0)

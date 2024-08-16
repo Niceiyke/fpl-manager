@@ -12,7 +12,7 @@ class TeamSelector:
     }
 
     goalkeeper_weights = {
-            "saves": 0.3,
+            "saves": 0,
             "clean_sheets": 0.3,
             "goals_conceded_per_90": 0.3,
             "bonus": 0.3,
