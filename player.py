@@ -7,6 +7,40 @@ class PlayerParser:
         self.fixtures = fixtures
         self.players = self.parse_players()
 
+    
+        
+      
+
+    def calculate_team_fixture_difficulty(self, team_id):
+            num_upcoming_fixtures=3
+            
+            # Initialize a list to store difficulties for the specific team
+            team_fixtures = []
+            
+            # Loop through fixtures and collect difficulties for the specified team
+            for fixture in self.fixtures:
+                if not fixture['finished']:
+                    if fixture['team_h'] == team_id:
+                        team_fixtures.append(fixture['team_h_difficulty'])
+                    if fixture['team_a'] == team_id:
+                        team_fixtures.append(fixture['team_a_difficulty'])
+            
+            # Limit the difficulties list to the number of upcoming fixtures
+            #print("fixtures",(team_fixtures[:num_upcoming_fixtures]))
+
+
+            
+            upcoming_difficulties = team_fixtures[:num_upcoming_fixtures]
+            
+            # Calculate the average difficulty for the specified team
+            if len(upcoming_difficulties) > 0:
+                avg_difficulty = sum(upcoming_difficulties) / len(upcoming_difficulties)
+                
+            else:
+                avg_difficulty = 0
+            
+            return avg_difficulty
+
     def parse_players(self):
         if not self.data or not self.fixtures:
             print("Data is missing or in an unexpected format.")
@@ -15,24 +49,13 @@ class PlayerParser:
         element_types = {1: "goalkeepers", 2: "defenders", 3: "midfielders", 4: "forwards"}
         players = {position: [] for position in element_types.values()}
 
-        team_fixtures = {team['id']: [] for team in self.data['teams']}
-        for fixture in self.fixtures:
-            if not fixture['finished']:
-                home_difficulty = fixture['team_h_difficulty']
-                away_difficulty = fixture['team_a_difficulty']
-                team_fixtures[fixture['team_h']].append(home_difficulty)
-                team_fixtures[fixture['team_a']].append(away_difficulty)
-
-        avg_fixture_difficulty = {
-            team_id: sum(difficulties) / len(difficulties) if len(difficulties) > 0 else 0
-            for team_id, difficulties in team_fixtures.items()
-        }
+        
 
         for player in self.data['elements']:
             position = element_types[player['element_type']]
             team_id = player['team']
             form = float(player['form'])
-            fixture_difficulty = avg_fixture_difficulty[team_id]
+            fixture_difficulty = self.calculate_team_fixture_difficulty(team_id)
 
             if player['status'] in ['i', 'd']:
                 continue
@@ -57,6 +80,8 @@ class PlayerParser:
                 "team": player['team'],
                 "starts": player['starts'],
             })
+
+        
 
         return players
     

@@ -3,12 +3,22 @@ from utility import RiskAssessor
 
 
 class AutomatedTeamManagement:
-    def __init__(self, current_team, budget, fixtures, injury_data, rotation_data):
-        self.current_team = current_team
-        self.budget = budget
-        self.fixtures = fixtures
-        self.injury_data = injury_data
-        self.rotation_data = rotation_data
+    def __init__(self, picks,all_players):
+        self.current_team = self.map_selected_picks(picks,all_players)
+ 
+    def  map_selected_picks(self,picks,players):
+        picked_players = []
+        for pick in picks:
+            # Find the player with the matching id
+            player = next((player for player in players if player["id"] == pick["element"]), None)
+            if player:
+                picked_players.append(player)
+
+        # Output the picked players
+        #for player in picked_players:
+            #print(player)
+        
+        return picked_players
 
     def transfer_decision(self, player_pool):
         transfers = []

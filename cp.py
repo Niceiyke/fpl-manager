@@ -82,6 +82,7 @@ class TeamSelectorCP:
             for team_id, difficulties in team_fixtures.items()
         }
 
+
         return avg_fixture_difficulty
     
     def calculate_max_values(self):
@@ -103,7 +104,7 @@ class TeamSelectorCP:
                         self.max_clean_sheets = max(self.max_clean_sheets, int(float(player.get("clean_sheets", 0))))
                         self.max_bonus = max(self.max_bonus, int(float(player.get("bonus", 0))))
                         self.max_goals_conceded = max(self.max_goals_conceded, int(float(player.get("goals_conceded_per_90", 0))))
-                        self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
+                        self.max_fdr = max(self.max_fdr, int(float(player.get("fixture_difficulty", 0))))
                         self.max_expected_point = max(self.max_expected_point, int(float(player.get("expected_point", 0))))
                         self.max_starts = max(self.max_starts, int(float(player.get("starts", 0))))
                         
@@ -111,7 +112,7 @@ class TeamSelectorCP:
                         self.max_goals_scored = max(self.max_goals_scored, int(float(player.get("goals_scored", 0))))
                         self.max_assists = max(self.max_assists, int(float(player.get("assists", 0))))
                         self.max_bonus = max(self.max_bonus, int(float(player.get("bonus", 0))))
-                        self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
+                        self.max_fdr = max(self.max_fdr, int(float(player.get("fixture_difficulty", 0))))
                         self.max_expected_point = max(self.max_expected_point, int(float(player.get("expected_point", 0))))
                         self.max_starts = max(self.max_starts, int(float(player.get("starts", 0))))
                         
@@ -119,7 +120,7 @@ class TeamSelectorCP:
                         self.max_goals_scored = max(self.max_goals_scored, int(float(player.get("goals_scored", 0))))
                         self.max_assists = max(self.max_assists, int(float(player.get("assists", 0))))
                         self.max_bonus = max(self.max_bonus, int(float(player.get("bonus", 0))))
-                        self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
+                        self.max_fdr = max(self.max_fdr, int(float(player.get("fixture_difficulty", 0))))
                         self.max_expected_point = max(self.max_expected_point, int(float(player.get("expected_point", 0))))
                         self.max_starts = max(self.max_starts, int(float(player.get("starts", 0))))
                         
@@ -127,7 +128,7 @@ class TeamSelectorCP:
                         self.max_clean_sheets = max(self.max_clean_sheets, int(float(player.get("clean_sheets", 0))))
                         self.max_bonus = max(self.max_bonus, int(float(player.get("bonus", 0))))
                         self.max_goals_conceded = max(self.max_goals_conceded, int(float(player.get("goals_conceded_per_90", 0))))
-                        self.max_fdr = max(self.max_fdr, self.upcoming_fixture_difficulty.get(player["team"], 0))
+                        self.max_fdr = max(self.max_fdr, int(float(player.get("fixture_difficulty", 0))))
                         self.max_saves = max(self.max_saves, int(float(player.get("saves", 0))))
                         self.max_expected_point = max(self.max_expected_point, int(float(player.get("expected_point", 0))))
                         self.max_starts = max(self.max_starts, int(float(player.get("starts", 0))))
@@ -135,13 +136,14 @@ class TeamSelectorCP:
 
     #Objective: maximize the total weighted score
     def get_player_score(self,player):
+            
             pos = self.position_map[player["position"]]
             score = 0
             if pos == "goalkeepers":
                 clean_sheets_score = (int(player.get("clean_sheets", 0)) / self.max_clean_sheets) if self.max_clean_sheets > 0 else 0
                 bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
                 goals_conceded_score = (1 - (int(player.get("goals_conceded_per_90", 0)) / self.max_goals_conceded)) if self.max_goals_conceded > 0 else 0
-                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
+                fdr_score = (1 - int(float(player.get("fixture_difficulty")) / self.max_fdr)) if self.max_fdr > 0 else 0
                 saves_score = (int(player.get("saves", 0)) / self.max_saves) if self.max_saves > 0 else 0
                 expected_point=(int(float(player.get("expected_point", 0))) / self.max_expected_point) if self.max_expected_point > 0 else 0
                 starts=(int(float(player.get("starts", 0))) / self.max_starts) if self.max_starts > 0 else 0
@@ -159,7 +161,7 @@ class TeamSelectorCP:
                 clean_sheets_score = (int(player.get("clean_sheets", 0)) / self.max_clean_sheets) if self.max_clean_sheets > 0 else 0
                 bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
                 goals_conceded_score = (1 - (int(player.get("goals_conceded_per_90", 0)) / self.max_goals_conceded)) if self.max_goals_conceded > 0 else 0
-                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
+                fdr_score = (1 - int(player.get("fixture_difficulty",0)) / self.max_fdr) if self.max_fdr > 0 else 0
                 expected_point=(int(float(player.get("expected_point", 0))) / self.max_expected_point) if self.max_expected_point > 0 else 0
                 starts=(int(float(player.get("starts", 0))) / self.max_starts) if self.max_starts > 0 else 0
 
@@ -176,7 +178,7 @@ class TeamSelectorCP:
                 goals_scored_score = (int(player.get("goals_scored", 0)) / self.max_goals_scored) if self.max_goals_scored > 0 else 0
                 assists_score = (int(player.get("assists", 0)) / self.max_assists) if self.max_assists > 0 else 0
                 bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
-                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
+                fdr_score = (1 - int(player.get("fixture_difficulty",0)) / self.max_fdr) if self.max_fdr > 0 else 0
                 expected_point=(int(float(player.get("expected_point", 0))) / self.max_expected_point) if self.max_expected_point > 0 else 0
                 starts=(int(float(player.get("starts", 0))) / self.max_starts) if self.max_starts > 0 else 0
 
@@ -193,7 +195,7 @@ class TeamSelectorCP:
                 goals_scored_score = (int(player.get("goals_scored", 0)) / self.max_goals_scored) if self.max_goals_scored > 0 else 0
                 assists_score = (int(player.get("assists", 0)) / self.max_assists) if self.max_assists > 0 else 0
                 bonus_score = (int(player.get("bonus", 0)) / self.max_bonus) if self.max_bonus > 0 else 0
-                fdr_score = (1 - (self.upcoming_fixture_difficulty[player["team"]] / self.max_fdr)) if self.max_fdr > 0 else 0
+                fdr_score = (1 - int(player.get("fixture_difficulty",0)) / self.max_fdr) if self.max_fdr > 0 else 0
                 expected_point=(int(float(player.get("expected_point", 0))) / self.max_expected_point) if self.max_expected_point > 0 else 0
                 starts=(int(float(player.get("starts", 0))) / self.max_starts) if self.max_starts > 0 else 0
 
