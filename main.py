@@ -1,6 +1,7 @@
 # Main function to create and manage a team
+from config import FPLConfig
 from data import FPLDataFetcher
-from player import PlayerParser
+from player import PlayerParser,EvaluatePlayer
 from team import TeamSelector
 from cp import TeamSelectorCP
 
@@ -15,6 +16,19 @@ def create_and_manage_team():
 
     player_parser = PlayerParser(fpl_data, fixtures)
     players = player_parser.players
+    config = config = FPLConfig(
+    availability_weight=1.0,
+    differential_thresholds={5: 1, 20: 1, 100: 1},
+    cost_efficiency_weight=1.2,
+    set_piece_weight=1.0,
+    fdr_weight=2.0,
+    recent_form_weight=5.0,
+    rotation_risk_weight=0.8,
+    team_strength_weight=1.0,
+    xg_xa_weight=1.5
+)
+    evaluate_player_obj=EvaluatePlayer(players)
+    evaluator=evaluate_player_obj.evaluate_player
    
     # Team selection
     total_budget = 100  # Total budget in million
@@ -26,9 +40,9 @@ def create_and_manage_team():
     }
   
     # Linear Programming approach
-    team_selector = TeamSelector(players, total_budget, position_requirements,fpl_data, fixtures)
-    team_selector_cp = TeamSelectorCP(players, total_budget, position_requirements,fpl_data, fixtures)
-    
+    team_selector = TeamSelector(players, total_budget, position_requirements,fpl_data, fixtures,evaluator,config)
+    team_selector_cp = TeamSelectorCP(players, total_budget, position_requirements,fpl_data, fixtures,evaluator,config)
+    """
     selected_team_lp = team_selector.select_team_lp()
     if selected_team_lp is None:
         
@@ -40,13 +54,13 @@ def create_and_manage_team():
             # Process the selected team
             print(f"Selected {len(players)} players for {position}:")
             for player in players:
-                print(f"- {player['name']} -(${player['price']}M) -(${player['points']}) -club:{player['team']}")
+                print(f"- {player['name']} -(${player['price']}M)  -club:{player['team']}")
                 total_price += player['price']
 
     print(f"\nTotal price of selected players: ${total_price:.1f}M")
     print(f"budget left: ${total_budget - total_price:.1f}M")
         
-    """
+    
     selected_team_ga = team_selector.select_team_ga()
     if selected_team_ga is None:
         
@@ -83,7 +97,7 @@ def create_and_manage_team():
             # Process the selected team
             print(f"Selected {len(players)} players for {position}:")
             for player in players:
-                print(f"- {player['name']} -(${player['price']}M) -({player['expected_point']}) -club:{player['team']}")
+                print(f"- {player['name']} -(${player['price']}M)  -club:{player['team']}")
                 total_price += player['price']
         print(f"\nTotal price of selected players: ${total_price:.1f}M")
         print(f"budget left: ${total_budget - total_price:.1f}M")
