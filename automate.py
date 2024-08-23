@@ -63,7 +63,6 @@ def main():
             
 
   
-    """
 
 
     best_lineup, bench =team_management.select_best_lineup_with_bench(players)
@@ -90,14 +89,10 @@ def main():
             
 
     print("Top Differential Players (Under 10% Ownership):\n")
-    print("Avaliable Differential players:",len( differential_players))
-    for player in differential_players[:20]:  # Display top 10 differentials by form
-        print(f"Name: {player['name']}, Team: {player['team']}, Position: {player['position']}, "
-            f"Ownership: {player['ownership']}%, Form: {player['form']}, Total Points: {player['total_points']}, Price: {float(player['price'])/10}")
-"""
-    
-    
-
+    print("Avaliable Differential players:",len( all_diff_players))
+    for player in differential_players[:len( all_diff_players)]: 
+        print(f"Name: {player['web_name']} Team: {player['team']}, Position: {player['element_type']} Ownership: {player['selected_by_percent']}%, Form: {player['form']}, Total Points: {player['total_points']}, Price: {float(player['now_cost'])/10}")
+        
 
 main()
 

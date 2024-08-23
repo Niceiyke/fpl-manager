@@ -12,6 +12,7 @@ class FPLDataFetcher:
         except requests.RequestException as e:
             print(f"Error fetching data from {url}: {e}")
             return None
+    
 
     @staticmethod
     def fetch_fpl_data():

@@ -6,10 +6,6 @@ class AutomatedTeamManagement:
         
         self.current_team =[]
         self.expected_points_threshold=2
-
-        
-     
-
        
     def  map_selected_picks(self,picks,players):
         picked_players = []
